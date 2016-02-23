@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <rootUrl>http://apis.baidu.com</rootUrl>
+    <headers>
+        <header name="apikey" value="84ef029c7ba6178bf1e393e07895f8b8"></header>
+    </headers>
+</root>
