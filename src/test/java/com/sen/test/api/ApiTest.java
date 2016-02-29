@@ -2,7 +2,9 @@ package com.sen.test.api;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.http.Header;
@@ -27,6 +29,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.sen.test.utils.DecodeUtil;
+import com.sen.test.utils.ExcelUtil;
 
 public class ApiTest {
 
@@ -36,8 +39,12 @@ public class ApiTest {
 
 	private Header[] publicHeaders;
 
+	private List<ApiDataBean> dataList;
+
 	@BeforeSuite
-	public void init() throws DocumentException {
+	public void init() throws DocumentException, IOException,
+			IllegalArgumentException, InstantiationException,
+			IllegalAccessException, InvocationTargetException {
 		SAXReader reader = new SAXReader();
 		String path = System.getProperty("user.dir") + "/api-config.xml";
 		Document document = reader.read(path);
@@ -54,39 +61,40 @@ public class ApiTest {
 			headers.add(header);
 		}
 		publicHeaders = headers.toArray(new Header[headers.size()]);
+		dataList = ExcelUtil.readExcel(ApiDataBean.class,
+				System.getProperty("user.dir") + "/api-data.xls", "Sheet1");
+
 	}
 
 	@DataProvider(name = "methods")
-	public Object[][] getMethodData() {
-		// ues to test
-		String method_name = "get";
-		// [method][errorMsg]
-		Object[][] methods = new Object[1][2];
+	public Iterator<Object[]> getMethodData() {
+		List<Object[]> dataProvider = new ArrayList<Object[]>();
+		for (ApiDataBean data : dataList) {
+			// [method][errorMsg]
+			Object[] objs = new Object[2];
+			String method_name = data.getMethod();
 
-		if ("post".equalsIgnoreCase(method_name)) {
-
-			HttpPost postMethod = new HttpPost(
-					parseUrl("/chazhao/shorturl/shorturl"));
-			postMethod.setHeaders(publicHeaders);
-			try {
-				HttpEntity entity;
-				entity = new StringEntity(
-						"{\"type\": 1, \"url\": [\"http://www.baidu.com\"]}",
-						"UTF-8");
-				postMethod.setEntity(entity);
-			} catch (UnsupportedEncodingException e) {
-				methods[0][1] = "参数转换失败:" + e.getMessage();
+			if ("post".equalsIgnoreCase(method_name)) {
+				HttpPost postMethod = new HttpPost(parseUrl(data.getUrl()));
+				postMethod.setHeaders(publicHeaders);
+				try {
+					HttpEntity entity;
+					entity = new StringEntity(data.getParam(), "UTF-8");
+					postMethod.setEntity(entity);
+				} catch (UnsupportedEncodingException e) {
+					objs[1] = "参数转换失败:" + e.getMessage();
+				}
+				objs[0] = postMethod;
+			} else {
+				HttpGet getMethod = new HttpGet(parseUrl(data.getUrl()));
+				// http://www.pm25.in/api/querys/pm2_5.json?city=zhuhai&token=5j1znBVAsnSf5xQyNQyq
+				// "apistore/aqiservice/citylist"
+				getMethod.setHeaders(publicHeaders);
+				objs[0] = getMethod;
 			}
-			methods[0][0] = postMethod;
-		} else {
-			HttpGet getMethod = new HttpGet(
-					parseUrl("apistore/aqiservice/citylist"));
-			// http://www.pm25.in/api/querys/pm2_5.json?city=zhuhai&token=5j1znBVAsnSf5xQyNQyq
-			// "apistore/aqiservice/citylist"
-			getMethod.setHeaders(publicHeaders);
-			methods[0][0] = getMethod;
+			dataProvider.add(objs);
 		}
-		return methods;
+		return dataProvider.iterator();
 	}
 
 	@Test(dataProvider = "methods")
@@ -115,4 +123,11 @@ public class ApiTest {
 		}
 		return rootUrl + shortUrl;
 	};
+
+	@Test
+	public void Test() {
+		for (ApiDataBean api : dataList) {
+			System.out.println("description" + api.getDescription());
+		}
+	}
 }
