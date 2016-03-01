@@ -67,49 +67,43 @@ public class ApiTest {
 	}
 
 	@DataProvider(name = "methods")
-	public Iterator<Object[]> getMethodData() {
+	public Iterator<Object[]> getMethodData(){
 		List<Object[]> dataProvider = new ArrayList<Object[]>();
 		for (ApiDataBean data : dataList) {
-			// [method][errorMsg]
-			Object[] objs = new Object[2];
-			String method_name = data.getMethod();
-
-			if ("post".equalsIgnoreCase(method_name)) {
-				HttpPost postMethod = new HttpPost(parseUrl(data.getUrl()));
-				postMethod.setHeaders(publicHeaders);
-				try {
-					HttpEntity entity;
-					entity = new StringEntity(data.getParam(), "UTF-8");
-					postMethod.setEntity(entity);
-				} catch (UnsupportedEncodingException e) {
-					objs[1] = "参数转换失败:" + e.getMessage();
-				}
-				objs[0] = postMethod;
-			} else {
-				HttpGet getMethod = new HttpGet(parseUrl(data.getUrl()));
-				// http://www.pm25.in/api/querys/pm2_5.json?city=zhuhai&token=5j1znBVAsnSf5xQyNQyq
-				// "apistore/aqiservice/citylist"
-				getMethod.setHeaders(publicHeaders);
-				objs[0] = getMethod;
-			}
-			dataProvider.add(objs);
+			dataProvider.add(new Object[]{data});
 		}
 		return dataProvider.iterator();
 	}
 
 	@Test(dataProvider = "methods")
-	public void test(HttpUriRequest method, String errorMsg)
+	public void test(ApiDataBean apiDataBean)
 			throws ClientProtocolException, IOException {
-
-		Assert.assertNull(errorMsg, errorMsg);
+		HttpUriRequest method = parseHttpRequest(apiDataBean.getUrl(),apiDataBean.getMethod(),apiDataBean.getParam());
 		System.out.println(method.getURI().toString());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(method);
 		HttpEntity respEntity = response.getEntity();
-		System.out.println("data:"
-				+ DecodeUtil.decodeUnicode(EntityUtils.toString(respEntity)));
+		String responseData = DecodeUtil.decodeUnicode(EntityUtils
+				.toString(respEntity));
+		System.out.println("data:" + responseData);
+		Assert.assertTrue(responseData.contains(apiDataBean.getVerify()));
+		// String value = JsonPath.read(responseData, "");
 	}
 
+	private HttpUriRequest parseHttpRequest(String url,String method,String param) throws UnsupportedEncodingException{
+		if ("post".equalsIgnoreCase(method)) {
+			HttpPost postMethod = new HttpPost(parseUrl(url));
+			postMethod.setHeaders(publicHeaders); 
+				HttpEntity entity = new StringEntity(param, "UTF-8");
+				postMethod.setEntity(entity);
+			return postMethod;
+		} else {
+			
+			HttpGet getMethod = new HttpGet(parseUrl(url));
+			getMethod.setHeaders(publicHeaders);
+			return getMethod;
+		}//delete put....
+	}
 	private String parseUrl(String shortUrl) {
 		if (shortUrl.startsWith("http")) {
 			return shortUrl;

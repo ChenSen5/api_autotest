@@ -5,6 +5,7 @@ public class ApiDataBean {
 	private String url;
 	private String method;
 	private String param;
+	private String verify;
 
 	public String getDescription() {
 		return description;
@@ -36,6 +37,14 @@ public class ApiDataBean {
 
 	public void setParam(String param) {
 		this.param = param;
+	}
+
+	public String getVerify() {
+		return verify;
+	}
+
+	public void setVerify(String verify) {
+		this.verify = verify;
 	}
 
 }
