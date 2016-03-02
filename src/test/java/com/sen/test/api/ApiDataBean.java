@@ -6,6 +6,8 @@ public class ApiDataBean {
 	private String method;
 	private String param;
 	private String verify;
+	private String excute;
+	private String save;
 
 	public String getDescription() {
 		return description;
@@ -45,6 +47,22 @@ public class ApiDataBean {
 
 	public void setVerify(String verify) {
 		this.verify = verify;
+	}
+
+	public String getExcute() {
+		return excute;
+	}
+
+	public void setExcute(String excute) {
+		this.excute = excute;
+	}
+
+	public String getSave() {
+		return save;
+	}
+
+	public void setSave(String save) {
+		this.save = save;
 	}
 
 }
