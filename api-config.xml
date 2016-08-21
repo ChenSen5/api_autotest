@@ -4,4 +4,8 @@
     <headers>
         <header name="apikey" value="84ef029c7ba6178bf1e393e07895f8b8"></header>
     </headers>
+    <params>
+    	<param name="test" value="value"></param>
+    </params>
+    <excel>/case/api-data.xls</excel>
 </root>

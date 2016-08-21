@@ -1,4 +1,4 @@
-package com.sen.test.utils;
+package com.sen.api.utils;
 
 public class DecodeUtil {
 	public static String decodeUnicode(String theString) {
