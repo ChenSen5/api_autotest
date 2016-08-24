@@ -112,11 +112,10 @@ public class ApiTest extends TestBase {
 	 */
 	@DataProvider(name = "apiDatas")
 	public Iterator<Object[]> getApiData(ITestContext context) throws DocumentException {
-		String excelName = context.getCurrentXmlTest().getParameter("excelName");
-		String sheetName = context.getCurrentXmlTest().getParameter("sheetName");
-		System.out.println(excelName+":"+sheetName);
-		dataList = readExcelData(ApiDataBean.class, apiConfig.getExcels(),
-				excelName, sheetName);
+		String excelPaths = context.getCurrentXmlTest().getParameter("excelPath");
+		String sheetNames = context.getCurrentXmlTest().getParameter("sheetName");
+		System.out.println(excelPaths+":"+sheetNames);
+		dataList = readExcelData(ApiDataBean.class,excelPaths.split(";"), sheetNames.split(";"));
 		List<Object[]> dataProvider = new ArrayList<Object[]>();
 		for (ApiDataBean data : dataList) {
 			if (data.isRun()) {

@@ -1,6 +1,7 @@
 package test.com.sen.api;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +16,6 @@ import com.alibaba.fastjson.JSONPath;
 import com.sen.api.beans.BaseBean;
 import com.sen.api.utils.AssertUtil;
 import com.sen.api.utils.ExcelUtil;
-import com.sen.api.utils.FileUtil;
 import com.sen.api.utils.FunctionUtil;
 import com.sen.api.utils.ReportUtil;
 import com.sen.api.utils.StringUtil;
@@ -38,10 +38,11 @@ public class TestBase {
 	protected Pattern funPattern = Pattern
 			.compile("__(\\w*?)\\((([\\w\\\\\\/:\\.\\$]*,?)*)\\)");// __(\\w*?)\\((((\\w*)|(\\w*,))*)\\)
 																	// __(\\w*?)\\(((\\w*,?\\w*)*)\\)
-	
-	protected void setSaveDates(Map<String,String> map){
+
+	protected void setSaveDates(Map<String, String> map) {
 		saveDatas.putAll(map);
 	}
+
 	/**
 	 * 组件预参数（处理__fucn()以及${xxxx}）
 	 * 
@@ -63,8 +64,7 @@ public class TestBase {
 			if (FunctionUtil.isFunction(funcName)
 					&& !funcName.equals("bodyfile")) {
 				// 属于函数助手，调用那个函数助手获取。
-				value = FunctionUtil.getValue(funcName,
-						args.split(","));
+				value = FunctionUtil.getValue(funcName, args.split(","));
 				// 解析对应的函数失败
 				Assert.assertNotNull(value,
 						String.format("解析函数失败：%s。", funcName));
@@ -115,6 +115,7 @@ public class TestBase {
 		}
 		return param;
 	}
+
 	/**
 	 * 获取公共数据池中的数据
 	 * 
@@ -161,31 +162,30 @@ public class TestBase {
 	 * @param key
 	 * @return
 	 */
-	private String getBuildValue(String sourchJson, String key) {		
+	private String getBuildValue(String sourchJson, String key) {
 		key = key.trim();
 		Matcher funMatch = funPattern.matcher(key);
-		if (key.startsWith("$.")) {//jsonpath 
+		if (key.startsWith("$.")) {// jsonpath
 			key = JSONPath.read(sourchJson, key).toString();
 		} else if (funMatch.find()) {
-//			String args;
-//			if (funMatch.group(2).startsWith("$.")) {
-//				args = JSONPath.read(sourchJson, funMatch.group(2)).toString();
-//			} else {
-//				args = funMatch.group(2);
-//			}
-			String args=funMatch.group(2);
-			String[] argArr=args.split(",");
-			for(int index=0;index<argArr.length;index++){
-				String arg =argArr[index];
-				if(arg.startsWith("$.")){
-					argArr[index]=JSONPath.read(sourchJson, arg).toString();
+			// String args;
+			// if (funMatch.group(2).startsWith("$.")) {
+			// args = JSONPath.read(sourchJson, funMatch.group(2)).toString();
+			// } else {
+			// args = funMatch.group(2);
+			// }
+			String args = funMatch.group(2);
+			String[] argArr = args.split(",");
+			for (int index = 0; index < argArr.length; index++) {
+				String arg = argArr[index];
+				if (arg.startsWith("$.")) {
+					argArr[index] = JSONPath.read(sourchJson, arg).toString();
 				}
-			}			
-			String value = FunctionUtil.getValue(funMatch.group(1),
-					argArr);
+			}
+			String value = FunctionUtil.getValue(funMatch.group(1), argArr);
 			key = StringUtil.replaceFirst(key, funMatch.group(), value);
 
-		} 
+		}
 		return key;
 	}
 
@@ -207,64 +207,60 @@ public class TestBase {
 		String[] saves = allSave.split(";");
 		String key, value;
 		for (String save : saves) {
-//			key = save.split("=")[0].trim();
-//			value = JsonPath.read(json, save.split("=")[1].trim()).toString();
-//			ReportUtil.log(String.format("存储公共参数   %s值为：%s.", key, value));
-//			saveDatas.put(key, value);
-			
+			// key = save.split("=")[0].trim();
+			// value = JsonPath.read(json,
+			// save.split("=")[1].trim()).toString();
+			// ReportUtil.log(String.format("存储公共参数   %s值为：%s.", key, value));
+			// saveDatas.put(key, value);
+
 			Pattern pattern = Pattern.compile("([^;=]*)=([^;]*)");
 			Matcher m = pattern.matcher(save.trim());
 			while (m.find()) {
 				key = getBuildValue(json, m.group(1));
 				value = getBuildValue(json, m.group(2));
-				
+
 				ReportUtil.log(String.format("存储公共参数   %s值为：%s.", key, value));
 				saveDatas.put(key, value);
 			}
 		}
 	}
+
 	/**
 	 * 根据配置读取测试用例
-	 * @param clz 需要转换的类
-	 * @param excelPaths	所有excel的路径配置
-	 * @param excelName	本次需要过滤的excel文件名
-	 * @param sheetName	本次需要过滤的sheet名
-	 * @return	返回数据
+	 * 
+	 * @param clz
+	 *            需要转换的类
+	 * @param excelPaths
+	 *            所有excel的路径配置
+	 * @param excelName
+	 *            本次需要过滤的excel文件名
+	 * @param sheetName
+	 *            本次需要过滤的sheet名
+	 * @return 返回数据
 	 * @throws DocumentException
 	 */
-	protected <T extends BaseBean> List<T> readExcelData(Class<T> clz,String excelPaths,String excelName, String sheetName)
+	protected <T extends BaseBean> List<T> readExcelData(Class<T> clz,
+			String[] excelPathArr, String[] sheetNameArr)
 			throws DocumentException {
-		List<T> allExcelData = new ArrayList<T>();
-		if (StringUtil.isEmpty(excelPaths)) {
-			return allExcelData;
-		}
-		List<File> files = FileUtil.getFilesByConf(
-				System.getProperty("user.dir"), excelPaths);// excel文件數組
+		List<T> allExcelData = new ArrayList<T>();// excel文件數組
 		List<T> temArrayList = new ArrayList<T>();
-		for (File file : files) {
+		for (String excelPath : excelPathArr) {
+			File file = Paths.get(System.getProperty("user.dir"),
+					excelPath).toFile();
 			temArrayList.clear();
-			if (StringUtil.isEmpty(file.getName())) {
-				continue;
-			}
-			String fileName = file.getName().replaceAll("[.][^.]+$", "");
-			if (StringUtil.isNotEmpty(excelName) && !excelName.trim().equals(fileName.trim())) {
-				continue;
-			}
-			if (StringUtil.isEmpty(sheetName)) {
-				temArrayList = ExcelUtil.readExcel(clz,
-						file.getAbsolutePath());
+			if (sheetNameArr.length == 0 || sheetNameArr[0] == "") {
+				temArrayList = ExcelUtil.readExcel(clz, file.getAbsolutePath());
 			} else {
-				for(String sheet :sheetName.split(";") ){
+				for (String sheetName : sheetNameArr) {
 					temArrayList.addAll(ExcelUtil.readExcel(clz,
-						file.getAbsolutePath(), sheet));
+							file.getAbsolutePath(), sheetName));
 				}
 			}
 			temArrayList.forEach((bean) -> {
-				bean.setExcelName(fileName);
+				bean.setExcelName(file.getName());
 			});
 			allExcelData.addAll(temArrayList); // 将excel数据添加至list
 		}
 		return allExcelData;
 	}
 }
-

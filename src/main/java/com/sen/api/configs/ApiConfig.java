@@ -17,7 +17,6 @@ public class ApiConfig {
 		Element rootElement = document.getRootElement();
 		
 		rootUrl = rootElement.element("rootUrl").getTextTrim();
-		excels = rootElement.element("excel").getTextTrim();
 		@SuppressWarnings("unchecked")
 		List<Element> paramElements = rootElement.element("params").elements(
 				"param");
@@ -35,7 +34,6 @@ public class ApiConfig {
 	}
 	private String rootUrl;
 	
-	private String excels;
 	
 	private Map<String,String> params = new HashMap<String, String>();
 	
@@ -45,9 +43,6 @@ public class ApiConfig {
 		return rootUrl;
 	}
 
-	public String getExcels() {
-		return excels;
-	}
 
 	public Map<String, String> getParams() {
 		return params;

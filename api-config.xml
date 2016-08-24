@@ -7,5 +7,4 @@
     <params>
     	<param name="test" value="value"></param>
     </params>
-    <excel>/case/api-data.xls</excel>
 </root>
