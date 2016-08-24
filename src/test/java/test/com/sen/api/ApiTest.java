@@ -29,10 +29,12 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
 import org.dom4j.DocumentException;
 import org.testng.Assert;
-import org.testng.ITestContext;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.alibaba.fastjson.JSON;
@@ -66,7 +68,7 @@ public class ApiTest extends TestBase {
 	 */
 	private static Header[] publicHeaders;
 
-	private static ApiConfig apiConfig;
+	private ApiConfig apiConfig;
 	/**
 	 * 所有api测试用例数据
 	 */
@@ -82,7 +84,7 @@ public class ApiTest extends TestBase {
 	 * @throws Exception
 	 */
 	@BeforeSuite
-	public void init(ITestContext context) throws UnsupportedEncodingException,
+	public void init() throws UnsupportedEncodingException,
 			ClientProtocolException, IOException, ErrorRespStatusException,
 			Exception {
 		String configFilePath = Paths.get(System.getProperty("user.dir") , "api-config.xml").toString();
@@ -104,6 +106,13 @@ public class ApiTest extends TestBase {
 		publicHeaders = headers.toArray(new Header[headers.size()]);
 
 	}
+	
+	@BeforeTest
+	@Parameters({"excelPath","sheetName"})
+	public void readExcelData(@Optional("") String excelPaths,@Optional("") String sheetNames) throws DocumentException{
+		System.out.println(excelPaths+":"+sheetNames);
+		dataList = readExcelData(ApiDataBean.class,excelPaths.split(";"), sheetNames.split(";"));
+	}
 	/**
 	 * 过滤数据，run标记为Y的执行。
 	 * 
@@ -111,11 +120,7 @@ public class ApiTest extends TestBase {
 	 * @throws DocumentException 
 	 */
 	@DataProvider(name = "apiDatas")
-	public Iterator<Object[]> getApiData(ITestContext context) throws DocumentException {
-		String excelPaths = context.getCurrentXmlTest().getParameter("excelPath");
-		String sheetNames = context.getCurrentXmlTest().getParameter("sheetName");
-		System.out.println(excelPaths+":"+sheetNames);
-		dataList = readExcelData(ApiDataBean.class,excelPaths.split(";"), sheetNames.split(";"));
+	public Iterator<Object[]> getApiData() throws DocumentException {
 		List<Object[]> dataProvider = new ArrayList<Object[]>();
 		for (ApiDataBean data : dataList) {
 			if (data.isRun()) {
