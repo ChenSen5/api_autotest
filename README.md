@@ -38,14 +38,17 @@ params：非必须配置，公共参数，通常放置初始化配置数据，�
 - description：该用例描述，在报告中提现。
 - method：该api测试用例的请求方法（暂只支持get,post）。
 - url：该api测试用例的请求路径。
+
 说明：
 若配置文件(api-config.xml)中rootUrl为"http://apis.baidu.com" ，url的值为：“/apistore/aqiservice/citylist”，框架执行的时候会根据配置文件中rootUrl进行自动拼接为：http://apis.baidu.com/apistore/aqiservice/citylist 。
 若填写url填写为http作为前缀的值如：“http://www.baidu.com/s?w=test” 将不会进行拼接。
 - param：请求方法为post时，body的内容（暂只支持json,不支持xml）。
 - verify：对于api请求response数据的验证（可使用jsonPath进行校验）。校验多个使用“；”进行隔开。
+
 说明：
 若verify填写值为：“$.errorCode=0;$.errorMessage=success”,则会校验返回值中$.errorCode的值为0，$.errorMessage的值为success，只要有一个校验错误，后面的其他校验项将停止校验。
-- save：使用jsonPath对response的数据进行提取存储。  
+- save：使用jsonPath对response的数据进行提取存储。 
+
 说明：
 若save值为：“id=$.userId;age=$.age”，接口实际返回内容为：“{"username":"chenwx","userId":"1000","age":"18"}”，则接口执行完成后，会将公共参数id的值存储为1000，age存储为18。公共参数可在后面的用例中进行使用。具体使用方法见下方高级用法。
 
