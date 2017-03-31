@@ -13,8 +13,13 @@
 	</test>
 	<listeners>	
 		<listener class-name="com.sen.api.listeners.AutoTestListener"></listener>
-		<listener class-name="com.sen.api.listeners.RetryListener"></listener>	
+		<listener class-name="com.sen.api.listeners.RetryListener"></listener>
+		<!-- ReportNg 报告  -->	
+		<!--  
 		<listener class-name="org.uncommons.reportng.HTMLReporter"></listener>
 		<listener class-name="org.uncommons.reportng.JUnitXMLReporter"></listener> 
+		-->
+		<!-- ExtentReport 报告  -->
+		<listener class-name="com.sen.api.listeners.ExtentTestNGIReporterListener"></listener>
 	</listeners>
 </suite> 

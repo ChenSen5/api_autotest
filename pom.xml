@@ -3,9 +3,9 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sen.test</groupId>
 	<artifactId>api</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
-	<name>api</name>
+	<name>接口测试自动化0.02版</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
@@ -102,6 +102,11 @@
 			<artifactId>guice</artifactId>
 			<version>3.0</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.aventstack</groupId>
+			<artifactId>extentreports</artifactId>
+			<version>3.0.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.testng</groupId>

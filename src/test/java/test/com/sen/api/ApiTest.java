@@ -29,6 +29,7 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
 import org.dom4j.DocumentException;
 import org.testng.Assert;
+import org.testng.ITestContext;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -43,7 +44,6 @@ import com.sen.api.configs.ApiConfig;
 import com.sen.api.excepions.ErrorRespStatusException;
 import com.sen.api.listeners.AutoTestListener;
 import com.sen.api.listeners.RetryListener;
-import com.sen.api.utils.DecodeUtil;
 import com.sen.api.utils.FileUtil;
 import com.sen.api.utils.RandomUtil;
 import com.sen.api.utils.ReportUtil;
@@ -68,11 +68,13 @@ public class ApiTest extends TestBase {
 	 */
 	private static Header[] publicHeaders;
 
-	private ApiConfig apiConfig;
+	private static ApiConfig apiConfig;
 	/**
 	 * 所有api测试用例数据
 	 */
 	protected List<ApiDataBean> dataList = new ArrayList<ApiDataBean>();
+
+	private static HttpClient client;
 
 	/**
 	 * 初始化测试数据
@@ -83,12 +85,14 @@ public class ApiTest extends TestBase {
 	 * @throws UnsupportedEncodingException
 	 * @throws Exception
 	 */
+	@Parameters("envName")
 	@BeforeSuite
-	public void init() throws UnsupportedEncodingException,
-			ClientProtocolException, IOException, ErrorRespStatusException,
-			Exception {
-		String configFilePath = Paths.get(System.getProperty("user.dir") , "api-config.xml").toString();
-		ReportUtil.log("api config path:"+configFilePath);
+	public void init(@Optional("email-config-112") String envName)
+			throws UnsupportedEncodingException, ClientProtocolException,
+			IOException, ErrorRespStatusException, Exception {
+		String configFilePath = Paths.get(System.getProperty("user.dir"),
+				"conf", "env", envName + ".xml").toString();
+		ReportUtil.log("api config path:" + configFilePath);
 		apiConfig = new ApiConfig(configFilePath);
 		// 获取基础数据
 		rootUrl = apiConfig.getRootUrl();
@@ -99,28 +103,34 @@ public class ApiTest extends TestBase {
 		setSaveDates(params);
 
 		List<Header> headers = new ArrayList<Header>();
-		apiConfig.getHeaders().forEach((key,value)->{
-			Header header = new BasicHeader(key,value);
+		apiConfig.getHeaders().forEach((key, value) -> {
+			Header header = new BasicHeader(key, value);
 			headers.add(header);
 		});
 		publicHeaders = headers.toArray(new Header[headers.size()]);
+		client = new SSLClient();
+		client.getParams().setParameter(
+				CoreConnectionPNames.CONNECTION_TIMEOUT, 60000); // 请求超时
+		client.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, 60000); // 读取超时
+	}
 
-	}
-	
+	@Parameters({ "excelName", "sheetName" })
 	@BeforeTest
-	@Parameters({"excelPath","sheetName"})
-	public void readExcelData(@Optional("") String excelPaths,@Optional("") String sheetNames) throws DocumentException{
-		System.out.println(excelPaths+":"+sheetNames);
-		dataList = readExcelData(ApiDataBean.class,excelPaths.split(";"), sheetNames.split(";"));
+	public void readData(@Optional("") String excelName,
+			@Optional("") String sheetName) throws DocumentException {
+		dataList = readExcelData(ApiDataBean.class, excelName.split(";"),
+				sheetName.split(";"));
 	}
+
 	/**
 	 * 过滤数据，run标记为Y的执行。
 	 * 
 	 * @return
-	 * @throws DocumentException 
+	 * @throws DocumentException
 	 */
 	@DataProvider(name = "apiDatas")
-	public Iterator<Object[]> getApiData() throws DocumentException {
+	public Iterator<Object[]> getApiData(ITestContext context)
+			throws DocumentException {
 		List<Object[]> dataProvider = new ArrayList<Object[]>();
 		for (ApiDataBean data : dataList) {
 			if (data.isRun()) {
@@ -132,48 +142,56 @@ public class ApiTest extends TestBase {
 
 	@Test(dataProvider = "apiDatas")
 	public void apiTest(ApiDataBean apiDataBean) throws Exception {
+		if (apiDataBean.getSleep() > 0) {
+			// sleep休眠时间大于0的情况下进行暂停休眠
+			ReportUtil.log(String.format("sleep %s seconds",
+					apiDataBean.getSleep()));
+			Thread.sleep(apiDataBean.getSleep() * 1000);
+		}
 		String apiParam = buildRequestParam(apiDataBean);
-		
 		// 封装请求方法
 		HttpUriRequest method = parseHttpRequest(apiDataBean.getUrl(),
 				apiDataBean.getMethod(), apiParam);
-		HttpClient client = new SSLClient();
-		client.getParams().setParameter(
-				CoreConnectionPNames.CONNECTION_TIMEOUT, 60000); // 请求超时
-		client.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, 60000); // 读取超时
-
-		// 执行
-		HttpResponse response = client.execute(method);
-		int reponseStatus = response.getStatusLine().getStatusCode();
-		if (StringUtil.isNotEmpty(apiDataBean.getStatus())) {
-			Assert.assertEquals(reponseStatus, apiDataBean.getStatus(),
-					"返回状态码与预期不符合!");
-		} else {
-			// 非2开头状态码为异常请求，抛异常后会进行重跑
-			if (200 > reponseStatus || reponseStatus >= 300) {
-				throw new ErrorRespStatusException("返回状态码异常：" + reponseStatus);
-			}
-		}
-		HttpEntity respEntity = response.getEntity();
 		String responseData;
-		Header respContenType = response.getFirstHeader("Content-Type");
-		if (respContenType != null
-				&& respContenType.getValue().contains("download")) {
-			String conDisposition = response.getFirstHeader(
-					"Content-disposition").getValue();
-			String fileType = conDisposition.substring(
-					conDisposition.lastIndexOf("."), conDisposition.length());
-			String filePath = "download/" + RandomUtil.getRandom(8, false)
-					+ fileType;
-			InputStream is = response.getEntity().getContent();
-			Assert.assertTrue(FileUtil.writeFile(is, filePath), "下载文件失败。");
-			// 将下载文件的路径放到{"filePath":"xxxxx"}进行返回
-			responseData = "{\"filePath\":\"" + filePath + "\"}";
-		} else {
-			responseData = DecodeUtil.decodeUnicode(EntityUtils
-					.toString(respEntity));
+		try {
+			// 执行
+			HttpResponse response = client.execute(method);
+			int responseStatus = response.getStatusLine().getStatusCode();
+			if (StringUtil.isNotEmpty(apiDataBean.getStatus())) {
+				Assert.assertEquals(responseStatus, apiDataBean.getStatus(),
+						"返回状态码与预期不符合!");
+			} else {
+				// 非2开头状态码为异常请求，抛异常后会进行重跑
+				if (200 > responseStatus || responseStatus >= 300) {
+					throw new ErrorRespStatusException("返回状态码异常："
+							+ responseStatus);
+				}
+			}
+			HttpEntity respEntity = response.getEntity();
+			Header respContentType = response.getFirstHeader("Content-Type");
+			if (respContentType != null
+					&& respContentType.getValue().contains("download") || respContentType.getValue().contains("octet-stream")) {
+				String conDisposition = response.getFirstHeader(
+						"Content-disposition").getValue();
+				String fileType = conDisposition.substring(
+						conDisposition.lastIndexOf("."),
+						conDisposition.length());
+				String filePath = "download/" + RandomUtil.getRandom(8, false)
+						+ fileType;
+				InputStream is = response.getEntity().getContent();
+				Assert.assertTrue(FileUtil.writeFile(is, filePath), "下载文件失败。");
+				// 将下载文件的路径放到{"filePath":"xxxxx"}进行返回
+				responseData = "{\"filePath\":\"" + filePath + "\"}";
+			} else {
+//				responseData = DecodeUtil.decodeUnicode(EntityUtils
+//						.toString(respEntity));
+				responseData=EntityUtils.toString(respEntity, "UTF-8");
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			method.abort();
 		}
-
 		// 输出返回数据log
 		ReportUtil.log("resp:" + responseData);
 		// 验证预期信息
@@ -182,7 +200,6 @@ public class ApiTest extends TestBase {
 
 		// 对返回结果进行提取保存。
 		saveResult(responseData, apiDataBean.getSave());
-
 	}
 
 	private String buildRequestParam(ApiDataBean apiDataBean) {
@@ -223,7 +240,8 @@ public class ApiTest extends TestBase {
 		} else if ("upload".equalsIgnoreCase(method)) {
 			HttpPost postMethod = new HttpPost(url);
 			@SuppressWarnings("unchecked")
-			Map<String, String> paramMap = JSON.parseObject(param, HashMap.class);
+			Map<String, String> paramMap = JSON.parseObject(param,
+					HashMap.class);
 			MultipartEntity entity = new MultipartEntity();
 			for (String key : paramMap.keySet()) {
 				String value = paramMap.get(key);

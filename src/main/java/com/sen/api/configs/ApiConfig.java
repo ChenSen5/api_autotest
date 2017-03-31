@@ -9,6 +9,8 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 
+import com.sen.api.utils.ReportUtil;
+
 public class ApiConfig {
 
 	public ApiConfig(String configFilePath) throws DocumentException{
@@ -31,6 +33,10 @@ public class ApiConfig {
 			headers.put(ele.attributeValue("name").trim(),
 					ele.attributeValue("value").trim());
 		});
+		Element projectEle = rootElement.element("project_name");
+		if(projectEle!=null){
+			ReportUtil.setReportName(projectEle.getTextTrim());
+		}
 	}
 	private String rootUrl;
 	

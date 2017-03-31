@@ -11,6 +11,7 @@ public class ApiDataBean extends BaseBean {
 	private String verify;
 	private String save;
 	private String preParam;
+	private int sleep;
 
 	public boolean isRun() {
 		return run;
@@ -92,13 +93,19 @@ public class ApiDataBean extends BaseBean {
 		this.preParam = preParam;
 	}
 
+	public int getSleep() {
+		return sleep;
+	}
+
+	public void setSleep(int sleep) {
+		this.sleep = sleep;
+	}
+
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		 return String.format("desc:%s,method:%s,url:%s,param:%s",
-				this.desc, this.method, this.url, this.param);
+		return String.format("desc:%s,method:%s,url:%s,param:%s", this.desc,
+				this.method, this.url, this.param);
 	}
-	
-	
 
 }
