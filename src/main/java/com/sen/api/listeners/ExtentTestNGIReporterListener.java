@@ -177,7 +177,7 @@ public class ExtentTestNGIReporterListener implements IReporter {
                 List<String> outputList = Reporter.getOutput(result);
                 for(String output:outputList){
                     //将用例的log输出报告中
-                    test.debug(output);
+                    test.debug(output.replaceAll("<","&lt;").replaceAll(">","&gt;"));
                 }
                 if (result.getThrowable() != null) {
                     test.log(status, result.getThrowable());
