@@ -1,21 +1,15 @@
 package test.com.sen.api;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-
+import com.alibaba.fastjson.JSON;
+import com.sen.api.beans.ApiDataBean;
+import com.sen.api.configs.ApiConfig;
+import com.sen.api.excepions.ErrorRespStatusException;
+import com.sen.api.listeners.AutoTestListener;
+import com.sen.api.listeners.RetryListener;
+import com.sen.api.utils.*;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -30,25 +24,15 @@ import org.apache.http.util.EntityUtils;
 import org.dom4j.DocumentException;
 import org.testng.Assert;
 import org.testng.ITestContext;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Listeners;
+import org.testng.annotations.*;
 import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
-import com.alibaba.fastjson.JSON;
-import com.sen.api.beans.ApiDataBean;
-import com.sen.api.configs.ApiConfig;
-import com.sen.api.excepions.ErrorRespStatusException;
-import com.sen.api.listeners.AutoTestListener;
-import com.sen.api.listeners.RetryListener;
-import com.sen.api.utils.FileUtil;
-import com.sen.api.utils.RandomUtil;
-import com.sen.api.utils.ReportUtil;
-import com.sen.api.utils.SSLClient;
-import com.sen.api.utils.StringUtil;
+import java.io.File;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.regex.Matcher;
 
 @Listeners({ AutoTestListener.class, RetryListener.class })
 public class ApiTest extends TestBase {
@@ -78,20 +62,12 @@ public class ApiTest extends TestBase {
 
 	/**
 	 * 初始化测试数据
-	 * 
-	 * @throws ErrorRespStatusException
-	 * @throws IOException
-	 * @throws ClientProtocolException
-	 * @throws UnsupportedEncodingException
+	 *
 	 * @throws Exception
 	 */
-	@Parameters("envName")
 	@BeforeSuite
-	public void init(@Optional("email-config-112") String envName)
-			throws UnsupportedEncodingException, ClientProtocolException,
-			IOException, ErrorRespStatusException, Exception {
-		String configFilePath = Paths.get(System.getProperty("user.dir"),
-				"conf", "env", envName + ".xml").toString();
+	public void init() throws Exception {
+		String configFilePath = Paths.get(System.getProperty("user.dir") , "api-config.xml").toString();
 		ReportUtil.log("api config path:" + configFilePath);
 		apiConfig = new ApiConfig(configFilePath);
 		// 获取基础数据
@@ -116,15 +92,14 @@ public class ApiTest extends TestBase {
 
 	@Parameters({ "excelName", "sheetName" })
 	@BeforeTest
-	public void readData(@Optional("") String excelName,
-			@Optional("") String sheetName) throws DocumentException {
+	public void readData(@Optional("") String excelName, @Optional("") String sheetName) throws DocumentException {
 		dataList = readExcelData(ApiDataBean.class, excelName.split(";"),
 				sheetName.split(";"));
 	}
 
 	/**
 	 * 过滤数据，run标记为Y的执行。
-	 * 
+	 *
 	 * @return
 	 * @throws DocumentException
 	 */
@@ -213,7 +188,7 @@ public class ApiTest extends TestBase {
 
 	/**
 	 * 封装请求方法
-	 * 
+	 *
 	 * @param url
 	 *            请求路径
 	 * @param method
@@ -223,8 +198,7 @@ public class ApiTest extends TestBase {
 	 * @return 请求方法
 	 * @throws UnsupportedEncodingException
 	 */
-	private HttpUriRequest parseHttpRequest(String url, String method,
-			String param) throws UnsupportedEncodingException {
+	private HttpUriRequest parseHttpRequest(String url, String method, String param) throws UnsupportedEncodingException {
 		// 处理url
 		url = parseUrl(url);
 		ReportUtil.log("method:" + method);
@@ -265,7 +239,7 @@ public class ApiTest extends TestBase {
 
 	/**
 	 * 格式化url,替换路径参数等。
-	 * 
+	 *
 	 * @param shortUrl
 	 * @return
 	 */
@@ -286,4 +260,3 @@ public class ApiTest extends TestBase {
 	}
 
 }
-
