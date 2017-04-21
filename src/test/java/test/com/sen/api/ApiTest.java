@@ -90,10 +90,10 @@ public class ApiTest extends TestBase {
 		client.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, 60000); // 读取超时
 	}
 
-	@Parameters({ "excelName", "sheetName" })
+	@Parameters({ "excelPath", "sheetName" })
 	@BeforeTest
-	public void readData(@Optional("") String excelName, @Optional("") String sheetName) throws DocumentException {
-		dataList = readExcelData(ApiDataBean.class, excelName.split(";"),
+	public void readData(@Optional("case/api-data.xls") String excelPath, @Optional("Sheet1") String sheetName) throws DocumentException {
+		dataList = readExcelData(ApiDataBean.class, excelPath.split(";"),
 				sheetName.split(";"));
 	}
 
