@@ -11,9 +11,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
@@ -52,7 +50,16 @@ public class ApiTest extends TestBase {
 	 */
 	private static Header[] publicHeaders;
 
+	/**
+	 * 是否使用form-data传参 会在post与put方法封装请求参数用到
+	 */
+	private static boolean requestByFormData = false;
+
+	/**
+	 * 配置
+	 */
 	private static ApiConfig apiConfig;
+
 	/**
 	 * 所有api测试用例数据
 	 */
@@ -81,6 +88,9 @@ public class ApiTest extends TestBase {
 		List<Header> headers = new ArrayList<Header>();
 		apiConfig.getHeaders().forEach((key, value) -> {
 			Header header = new BasicHeader(key, value);
+			if(!requestByFormData && key.equalsIgnoreCase("content-type") && value.contains("")){
+				requestByFormData=true;
+			}
 			headers.add(header);
 		});
 		publicHeaders = headers.toArray(new Header[headers.size()]);
@@ -204,37 +214,33 @@ public class ApiTest extends TestBase {
 		ReportUtil.log("method:" + method);
 		ReportUtil.log("url:" + url);
 		ReportUtil.log("param:" + param.replace("\r\n", "").replace("\n", ""));
-		if ("post".equalsIgnoreCase(method)) {
+		//upload表示上传，也是使用post进行请求
+		if ("post".equalsIgnoreCase(method) || "upload".equalsIgnoreCase(method)) {
 			// 封装post方法
 			HttpPost postMethod = new HttpPost(url);
 			postMethod.setHeaders(publicHeaders);
-			HttpEntity entity = new StringEntity(param, "UTF-8");
+			//如果请求头的content-type的值包含form-data 或者 请求方法为upload(上传)时采用MultipartEntity形式
+			HttpEntity entity  = parseEntity(param,requestByFormData || "upload".equalsIgnoreCase(method));
 			postMethod.setEntity(entity);
 			return postMethod;
-		} else if ("upload".equalsIgnoreCase(method)) {
-			HttpPost postMethod = new HttpPost(url);
-			@SuppressWarnings("unchecked")
-			Map<String, String> paramMap = JSON.parseObject(param,
-					HashMap.class);
-			MultipartEntity entity = new MultipartEntity();
-			for (String key : paramMap.keySet()) {
-				String value = paramMap.get(key);
-				Matcher m = funPattern.matcher(value);
-				if (m.matches() && m.group(1).equals("bodyfile")) {
-					value = m.group(2);
-					entity.addPart(key, new FileBody(new File(value)));
-				} else {
-					entity.addPart(key, new StringBody(paramMap.get(key)));
-				}
-			}
-			postMethod.setEntity(entity);
-			return postMethod;
+		} else if ("put".equalsIgnoreCase(method)) {
+			// 封装put方法
+			HttpPut putMethod = new HttpPut(url);
+			putMethod.setHeaders(publicHeaders);
+			HttpEntity entity  = parseEntity(param,requestByFormData );
+			putMethod.setEntity(entity);
+			return putMethod;
+		} else if ("delete".equalsIgnoreCase(method)) {
+			// 封装delete方法
+			HttpDelete deleteMethod = new HttpDelete(url);
+			deleteMethod.setHeaders(publicHeaders);
+			return deleteMethod;
 		} else {
 			// 封装get方法
 			HttpGet getMethod = new HttpGet(url);
 			getMethod.setHeaders(publicHeaders);
 			return getMethod;
-		}// delete put....
+		}
 	}
 
 	/**
@@ -257,6 +263,34 @@ public class ApiTest extends TestBase {
 			}
 		}
 		return rootUrl + shortUrl;
+	}
+
+	/**
+	 * 格式化参数，如果是from-data格式则将参数封装到MultipartEntity否则封装到StringEntity
+	 * @param param 参数
+	 * @param formData 是否使用form-data格式
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 */
+	private HttpEntity parseEntity(String param,boolean formData) throws UnsupportedEncodingException{
+		if(formData){
+			Map<String, String> paramMap = JSON.parseObject(param,
+					HashMap.class);
+			MultipartEntity multiEntity = new MultipartEntity();
+			for (String key : paramMap.keySet()) {
+				String value = paramMap.get(key);
+				Matcher m = funPattern.matcher(value);
+				if (m.matches() && m.group(1).equals("bodyfile")) {
+					value = m.group(2);
+					multiEntity.addPart(key, new FileBody(new File(value)));
+				} else {
+					multiEntity.addPart(key, new StringBody(paramMap.get(key)));
+				}
+			}
+			return multiEntity;
+		}else{
+			return new StringEntity(param, "UTF-8");
+		}
 	}
 
 }
