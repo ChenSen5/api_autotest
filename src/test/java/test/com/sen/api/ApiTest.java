@@ -88,7 +88,7 @@ public class ApiTest extends TestBase {
 		List<Header> headers = new ArrayList<Header>();
 		apiConfig.getHeaders().forEach((key, value) -> {
 			Header header = new BasicHeader(key, value);
-			if(!requestByFormData && key.equalsIgnoreCase("content-type") && value.contains("")){
+			if(!requestByFormData && key.equalsIgnoreCase("content-type") && value.contains("form-data")){
 				requestByFormData=true;
 			}
 			headers.add(header);
