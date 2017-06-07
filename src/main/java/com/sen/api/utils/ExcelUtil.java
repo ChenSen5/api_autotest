@@ -1,5 +1,10 @@
 package com.sen.api.utils;
 
+import com.alibaba.fastjson.JSONObject;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -9,15 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import com.alibaba.fastjson.JSONObject;
 
 public class ExcelUtil {
 
@@ -200,11 +196,11 @@ public class ExcelUtil {
 
 	private static String getValue(Cell cell) {
 		if (null == cell) {
-			return "";
-		} else if (cell.getCellType() == Cell.CELL_TYPE_BOOLEAN) {
+			return "";			
+		} else if (cell.getCellTypeEnum() == CellType.BOOLEAN) {
 			// 返回布尔类型的值
 			return String.valueOf(cell.getBooleanCellValue());
-		} else if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+		} else if (cell.getCellTypeEnum() == CellType.NUMERIC) {
 			// 返回数值类型的值
 			return String.valueOf(cell.getNumericCellValue());
 		} else {
