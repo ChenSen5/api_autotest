@@ -142,17 +142,19 @@ public class ApiTest extends TestBase {
 			// 执行
 			HttpResponse response = client.execute(method);
 			int responseStatus = response.getStatusLine().getStatusCode();
+			ReportUtil.log("返回状态码："+responseStatus);
 			if (StringUtil.isNotEmpty(apiDataBean.getStatus())) {
 				Assert.assertEquals(responseStatus, apiDataBean.getStatus(),
 						"返回状态码与预期不符合!");
-			} else {
-				// 非2开头状态码为异常请求，抛异常后会进行重跑
-				ReportUtil.log("返回状态码非200开头："+EntityUtils.toString(response.getEntity(), "UTF-8"));
-				if (200 > responseStatus || responseStatus >= 300) {
-					throw new ErrorRespStatusException("返回状态码异常："
-							+ responseStatus);
-				}
-			}
+			} 
+//			else {
+//				// 非2开头状态码为异常请求，抛异常后会进行重跑
+//				if (200 > responseStatus || responseStatus >= 300) {
+//					ReportUtil.log("返回状态码非200开头："+EntityUtils.toString(response.getEntity(), "UTF-8"));
+//					throw new ErrorRespStatusException("返回状态码异常："
+//							+ responseStatus);
+//				}
+//			}
 			HttpEntity respEntity = response.getEntity();
 			Header respContentType = response.getFirstHeader("Content-Type");
 			if (respContentType != null
