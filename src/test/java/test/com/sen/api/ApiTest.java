@@ -147,6 +147,7 @@ public class ApiTest extends TestBase {
 						"返回状态码与预期不符合!");
 			} else {
 				// 非2开头状态码为异常请求，抛异常后会进行重跑
+				ReportUtil.log("返回状态码非200开头："+EntityUtils.toString(response.getEntity(), "UTF-8"));
 				if (200 > responseStatus || responseStatus >= 300) {
 					throw new ErrorRespStatusException("返回状态码异常："
 							+ responseStatus);
