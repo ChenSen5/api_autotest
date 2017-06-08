@@ -157,7 +157,7 @@ public class ApiTest extends TestBase {
 //			}
 			HttpEntity respEntity = response.getEntity();
 			Header respContentType = response.getFirstHeader("Content-Type");
-			if (respContentType != null
+			if (respContentType != null && respContentType.getValue() != null 
 					&& respContentType.getValue().contains("download") || respContentType.getValue().contains("octet-stream")) {
 				String conDisposition = response.getFirstHeader(
 						"Content-disposition").getValue();
