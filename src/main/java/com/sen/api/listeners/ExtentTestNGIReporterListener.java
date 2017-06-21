@@ -121,12 +121,23 @@ public class ExtentTestNGIReporterListener implements IReporter {
         htmlReporter.config().setChartVisibilityOnOpen(true);
         htmlReporter.config().setTestViewChartLocation(ChartLocation.TOP);
         htmlReporter.config().setTheme(Theme.STANDARD);
-        htmlReporter.config().setCSS(".node.level-1  ul{ display:none;} .node.level-1.active ul{display:block;}");
+        //设置点击效果：.node.level-1  ul{ display:none;} .node.level-1.active ul{display:block;}
+        //设置系统信息样式：.card-panel.environment  th:first-child{ width:30%;}
+        htmlReporter.config().setCSS(".node.level-1  ul{ display:none;} .node.level-1.active ul{display:block;}  .card-panel.environment  th:first-child{ width:30%;}");
         // 移除按键监听事件
         htmlReporter.config().setJS("$(window).off(\"keydown\");");
         extent = new ExtentReports();
         extent.attachReporter(htmlReporter);
         extent.setReportUsesManualConfiguration(true);
+        // 设置系统信息
+        Properties properties = System.getProperties();
+        extent.setSystemInfo("os.name",properties.getProperty("os.name","未知"));
+        extent.setSystemInfo("os.arch",properties.getProperty("os.arch","未知"));
+        extent.setSystemInfo("os.version",properties.getProperty("os.version","未知"));
+        extent.setSystemInfo("java.version",properties.getProperty("java.version","未知"));
+        extent.setSystemInfo("java.home",properties.getProperty("java.home","未知"));
+        extent.setSystemInfo("user.name",properties.getProperty("user.name","未知"));
+        extent.setSystemInfo("user.dir",properties.getProperty("user.dir","未知"));
     }
 
     private void buildTestNodes(ExtentTest extenttest,IResultMap tests, Status status) {
