@@ -72,9 +72,10 @@ public class ApiTest extends TestBase {
 	 *
 	 * @throws Exception
 	 */
+	@Parameters("envName")
 	@BeforeSuite
-	public void init() throws Exception {
-		String configFilePath = Paths.get(System.getProperty("user.dir") , "api-config.xml").toString();
+	public void init(@Optional("api-config.xml") String envName) throws Exception {
+		String configFilePath = Paths.get(System.getProperty("user.dir"), envName).toString();
 		ReportUtil.log("api config path:" + configFilePath);
 		apiConfig = new ApiConfig(configFilePath);
 		// 获取基础数据
@@ -127,6 +128,7 @@ public class ApiTest extends TestBase {
 
 	@Test(dataProvider = "apiDatas")
 	public void apiTest(ApiDataBean apiDataBean) throws Exception {
+		ReportUtil.log("--- test start ---");
 		if (apiDataBean.getSleep() > 0) {
 			// sleep休眠时间大于0的情况下进行暂停休眠
 			ReportUtil.log(String.format("sleep %s seconds",

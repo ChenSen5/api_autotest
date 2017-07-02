@@ -10,6 +10,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<envName>api-config.xml</envName>
 		<xmlFileName>testng.xml</xmlFileName>
 	</properties>
 	<build>
@@ -19,6 +20,9 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.17</version>
 				<configuration>
+					<systemProperties>
+						<envName>${envName}</envName>
+					</systemProperties>
 					<suiteXmlFiles>
 						<suiteXmlFile>${xmlFileName}</suiteXmlFile>
 					</suiteXmlFiles>
