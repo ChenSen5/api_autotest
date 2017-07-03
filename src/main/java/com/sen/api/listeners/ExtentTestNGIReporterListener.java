@@ -192,11 +192,18 @@ public class ExtentTestNGIReporterListener implements IReporter {
                 else {
                     test.log(status, "Test " + status.toString().toLowerCase() + "ed");
                 }
-                //设置log的时间，暂时把每个log的时间设置为所属test的EndTime，避免全部使用生产报告的时间导致计算时间出错。后面继续修复，使用切确的log输出时间。
+                //设置log的时间，根据ReportUtil.log()的特定格式进行处理获取数据log的时间
                 Iterator logIterator = test.getModel().getLogContext().getIterator();
                 while (logIterator.hasNext()){
                     Log log = (Log) logIterator.next();
-                    log.setTimestamp(getTime(result.getEndMillis()));
+                    String details = log.getDetails();
+                    if(details.contains(ReportUtil.getSpiltTimeAndMsg())){
+                        String time = details.split(ReportUtil.getSpiltTimeAndMsg())[0];
+                        log.setTimestamp(getTime(Long.valueOf(time)));
+                        log.setDetails(details.substring(time.length()+ReportUtil.getSpiltTimeAndMsg().length()));
+                    }else{
+                        log.setTimestamp(getTime(result.getEndMillis()));
+                    }
                 }
                 test.getModel().setStartTime(getTime(result.getStartMillis()));
                 test.getModel().setEndTime(getTime(result.getEndMillis()));
