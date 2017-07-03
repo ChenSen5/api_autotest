@@ -1,31 +1,20 @@
 package com.sen.api.listeners;
 
-import java.io.File;
-import java.util.Calendar;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
-import org.testng.IReporter;
-import org.testng.IResultMap;
-import org.testng.ISuite;
-import org.testng.ISuiteResult;
-import org.testng.ITestContext;
-import org.testng.ITestResult;
-import org.testng.Reporter;
-import org.testng.xml.XmlSuite;
-
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.ResourceCDN;
 import com.aventstack.extentreports.Status;
+import com.aventstack.extentreports.model.Log;
 import com.aventstack.extentreports.model.TestAttribute;
 import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
 import com.aventstack.extentreports.reporter.configuration.ChartLocation;
 import com.aventstack.extentreports.reporter.configuration.Theme;
 import com.sen.api.utils.ReportUtil;
+import org.testng.*;
+import org.testng.xml.XmlSuite;
+
+import java.io.File;
+import java.util.*;
 
 
 public class ExtentTestNGIReporterListener implements IReporter {
@@ -61,27 +50,32 @@ public class ExtentTestNGIReporterListener implements IReporter {
             if(result.size()>1){
                 createSuiteResultNode=true;
             }
+            Date suiteStartTime = null,suiteEndTime=new Date();
             for (ISuiteResult r : result.values()) {
                 ExtentTest resultNode;
                 ITestContext context = r.getTestContext();
                 if(createSuiteResultNode){
-                    //没有创建suite的情况下，将在SuiteResult的创建为一级机电，否则创建为suite的一个子节点。
+                    //没有创建suite的情况下，将在SuiteResult的创建为一级节点，否则创建为suite的一个子节点。
                     if( null == suiteTest){
-                        resultNode = extent.createTest(r.getTestContext().getName());
+                        resultNode = extent.createTest(context.getName());
                     }else{
-                        resultNode = suiteTest.createNode(r.getTestContext().getName());
+                        resultNode = suiteTest.createNode(context.getName());
                     }
                 }else{
                     resultNode = suiteTest;
                 }
                 if(resultNode != null){
-                    resultNode.assignCategory(suite.getName(),r.getTestContext().getName());
-                    resultNode.getModel().setStartTime(r.getTestContext().getStartDate());
-                    resultNode.getModel().setEndTime(r.getTestContext().getEndDate());
+                    resultNode.assignCategory(suite.getName(),context.getName());
+                    if(suiteStartTime == null){
+                        suiteStartTime = context.getStartDate();
+                    }
+                    suiteEndTime = context.getEndDate();
+                    resultNode.getModel().setStartTime(context.getStartDate());
+                    resultNode.getModel().setEndTime(context.getEndDate());
                     //统计SuiteResult下的数据
-                    int passSize = r.getTestContext().getPassedTests().size();
-                    int failSize = r.getTestContext().getFailedTests().size();
-                    int skipSize = r.getTestContext().getSkippedTests().size();
+                    int passSize = context.getPassedTests().size();
+                    int failSize = context.getFailedTests().size();
+                    int skipSize = context.getSkippedTests().size();
                     suitePassSize += passSize;
                     suiteFailSize += failSize;
                     suiteSkipSize += skipSize;
@@ -96,16 +90,14 @@ public class ExtentTestNGIReporterListener implements IReporter {
             }
             if(suiteTest!= null){
                 suiteTest.getModel().setDescription(String.format("Pass: %s ; Fail: %s ; Skip: %s ;",suitePassSize,suiteFailSize,suiteSkipSize));
+                suiteTest.getModel().setStartTime(suiteStartTime==null?new Date():suiteStartTime);
+                suiteTest.getModel().setEndTime(suiteEndTime);
                 if(suiteFailSize>0){
                     suiteTest.getModel().setStatus(Status.FAIL);
                 }
             }
 
         }
-//        for (String s : Reporter.getOutput()) {
-//            extent.setTestRunnerOutput(s);
-//        }
-
         extent.flush();
     }
 
@@ -126,6 +118,8 @@ public class ExtentTestNGIReporterListener implements IReporter {
         htmlReporter.config().setCSS(".node.level-1  ul{ display:none;} .node.level-1.active ul{display:block;}  .card-panel.environment  th:first-child{ width:30%;}");
         // 移除按键监听事件
         htmlReporter.config().setJS("$(window).off(\"keydown\");");
+        //设置静态文件的DNS 如果cdn.rawgit.com访问不了，可以设置为：ResourceCDN.EXTENTREPORTS 或者ResourceCDN.GITHUB
+        htmlReporter.config().setResourceCDN(ResourceCDN.EXTENTREPORTS);
         extent = new ExtentReports();
         extent.attachReporter(htmlReporter);
         extent.setReportUsesManualConfiguration(true);
@@ -198,7 +192,12 @@ public class ExtentTestNGIReporterListener implements IReporter {
                 else {
                     test.log(status, "Test " + status.toString().toLowerCase() + "ed");
                 }
-
+                //设置log的时间，暂时把每个log的时间设置为所属test的EndTime，避免全部使用生产报告的时间导致计算时间出错。后面继续修复，使用切确的log输出时间。
+                Iterator logIterator = test.getModel().getLogContext().getIterator();
+                while (logIterator.hasNext()){
+                    Log log = (Log) logIterator.next();
+                    log.setTimestamp(getTime(result.getEndMillis()));
+                }
                 test.getModel().setStartTime(getTime(result.getStartMillis()));
                 test.getModel().setEndTime(getTime(result.getEndMillis()));
             }
