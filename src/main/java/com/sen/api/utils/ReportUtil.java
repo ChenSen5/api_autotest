@@ -2,17 +2,23 @@ package com.sen.api.utils;
 
 import org.testng.Reporter;
 
-import com.sen.api.utils.ReportUtil;
-import com.sen.api.utils.StringUtil;
+import java.util.Calendar;
 
 public class ReportUtil {
 	private static String reportName = "自动化测试报告";
+
+	private static String splitTimeAndMsg = "===";
 	public static void log(String msg) {
-		Reporter.log(msg, true);
+		long timeMillis = Calendar.getInstance().getTimeInMillis();
+		Reporter.log(timeMillis + splitTimeAndMsg + msg, true);
 	}
 
 	public static String getReportName() {
 		return reportName;
+	}
+
+	public static String getSpiltTimeAndMsg() {
+		return splitTimeAndMsg;
 	}
 
 	public static void setReportName(String reportName) {
