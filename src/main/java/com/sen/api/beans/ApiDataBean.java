@@ -7,7 +7,7 @@ public class ApiDataBean extends BaseBean {
 	private String method;
 	private String param;
 	private boolean contains;
-	private String status;
+	private int status;
 	private String verify;
 	private String save;
 	private String preParam;
@@ -60,12 +60,12 @@ public class ApiDataBean extends BaseBean {
 	public void setContains(boolean contains) {
 		this.contains = contains;
 	}
-
-	public String getStatus() {
+	
+	public int getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public void setStatus(int status) {
 		this.status = status;
 	}
 
