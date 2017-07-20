@@ -145,7 +145,7 @@ public class ApiTest extends TestBase {
 			HttpResponse response = client.execute(method);
 			int responseStatus = response.getStatusLine().getStatusCode();
 			ReportUtil.log("返回状态码："+responseStatus);
-			if (StringUtil.isNotEmpty(apiDataBean.getStatus())) {
+			if (apiDataBean.getStatus()!= 0) {
 				Assert.assertEquals(responseStatus, apiDataBean.getStatus(),
 						"返回状态码与预期不符合!");
 			} 
